@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <style>
+        /* Centralizar o campo de pesquisa */
+        body, html {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            flex-direction: column;
+        }
+        #search-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #search {
+            width: 300px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        #search-btn {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #history-container {
+            max-width: 400px;
+            width: 100%;
+            text-align: left;
+        }
+        #history-container h3 {
+            margin-bottom: 10px;
+        }
+        #history-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        #history-list li {
+            padding: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+            padding: 2px 6px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="search-container">
+        <input id="search" type="text" placeholder="Search" autocomplete="off">
+        <button id="search-btn">Search</button>
+    </div>
+    
+    <div id="history-container">
+        <h3>Search History</h3>
+        <ul id="history-list"></ul>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('search');
+        const searchButton = document.getElementById('search-btn');
+        const historyList = document.getElementById('history-list');
+
+        // Função para atualizar o histórico de pesquisas na tela
+        function updateHistoryDisplay() {
+            historyList.innerHTML = '';
+
+            const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            searchHistory.forEach((search, index) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <a href="${isURL(search) ? search : 'https://www.bing.com/search?q=' + encodeURIComponent(search)}" target="_blank">
+                        ${search}
+                    </a>
+                    <button class="delete-btn" onclick="deleteHistoryItem(${index})">Delete</button>
+                `;
+                historyList.appendChild(listItem);
+            });
+        }
+
+        // Função para verificar se a entrada é um URL completo
+        function isURL(query) {
+            const urlPattern = /^(https?:\/\/)?([a-z0-9.-]+\.[a-z]{2,})(\/[^\s]*)?$/i;
+            return urlPattern.test(query);
+        }
+
+        // Função para adicionar uma nova pesquisa ao histórico
+        function addToHistory(query) {
+            const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            // Verificar se o termo já existe no histórico
+            if (!searchHistory.includes(query)) {
+                searchHistory.unshift(query);
+                if (searchHistory.length > 10) {
+                    searchHistory.pop();
+                }
+                localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+                updateHistoryDisplay();
+            }
+        }
+
+        // Função para excluir uma entrada específica do histórico
+        function deleteHistoryItem(index) {
+            const searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
+            searchHistory.splice(index, 1);
+            localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+            updateHistoryDisplay();
+        }
+
+        // Evento ao clicar no botão de busca
+        searchButton.addEventListener('click', function() {
+            const query = searchInput.value.trim();
+            
+            if (query) {
+                addToHistory(query);
+                if (isURL(query)) {
+                    window.open(query.startsWith('http') ? query : `https://${query}`, '_blank');
+                } else {
+                    window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+                }
+            }
+        });
+
+        updateHistoryDisplay();
+    </script>
+</body>
+</html>
